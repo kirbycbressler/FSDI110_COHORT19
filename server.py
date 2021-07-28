@@ -1,4 +1,5 @@
 from flask import Flask, abort, request, render_template
+from pymongo.message import insert
 from data import data
 import json
 from flask_cors import CORS
@@ -41,7 +42,7 @@ def fullName():
 
 @app.route("/api/catalog")
 def get_catalog():
-  cursor = db.products.fing({})
+  cursor = db.products.find({})
   catalog = [item for item in cursor]
 
 
@@ -60,6 +61,16 @@ def get_product_by_category(category):
   data = db.products.find({"category": category})
   results = [item for item in data]
   return parse_json(results)
+
+@app.route("/api/discountCode/<code>")
+def get_discount(code):
+  data = db.couponCodes.find({"code": code})
+  for code in data:
+    return parse_json(code)
+
+  return parse_json({"error":True, "reason":"invalid code"})
+
+
 
 @app.route("/api/catalog/id/<id>")
 def get_product_by_id(id):
@@ -109,6 +120,14 @@ def test_data_manipulation():
 
   return parse_json(test_data[0])
 
+@app.route("/test/populatecodes")
+def test_populate_codes():
+  db.couponCodes.insert({"code": "qwerty", "discount": 10})
+  db.couponCodes.insert({"code": "7off", "discount": 7})
+  db.couponCodes.insert({"code": "5off", "discount": 5})
+  db.couponCodes.insert({"code": "20off", "discount": 20})
+
+  return "Coupon registered"
 
 # if __name__ == '__main__':
 #   app.run(debug=True) 
