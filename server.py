@@ -56,6 +56,36 @@ def save_product():
   db.products.insert(prod)
   return parse_json(prod)
 
+# create post endpoint to recieve the order
+@app.route("api/order", method=["POST"])
+def place_Order():
+  order = request.get_json()
+
+  total = 0.0
+  for prod in order["products"]:
+    quantity = prod["quantity"]
+    price= prod["price"]
+    total += (quantity * price)
+
+  order["total"]= total
+
+  code = order["couponCode"]
+
+  if(len(code) > 0):
+    cursor = db.couponCodes.find({"code":code})
+    for coupon in cursor:
+        discount = total * (coupon["discount"] / 100)
+        total = total- discount #10
+
+  order["total"] = total
+  # calculate total of order
+  # verify if there is coupon code on order
+  # verify the coupon and get discount %
+  # apply discount
+
+  db.orders.insert(order)
+  return parse_json(order)
+
 @app.route("/api/catalog/<category>")
 def get_product_by_category(category):
   data = db.products.find({"category": category})
